@@ -1,3 +1,4 @@
+import 'package:Schedule_generator_app/widgets/task_stats_card.dart';
 import 'package:flutter/material.dart';
 import 'package:Schedule_generator_app/core/theme.dart';
 import 'package:Schedule_generator_app/models/app_settings_model.dart';
@@ -24,6 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Task> _tasks = [];
   AppSettings _settings = const AppSettings();
   bool _isGenerating = false;
+  bool _showStats = false;
+  bool _isReordering = false;
 
   @override
   void initState() {
@@ -63,8 +66,27 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _deleteTask(int index) async {
+    final task = _tasks[index];
     setState(() => _tasks.removeAt(index));
     await _storage.saveTasks(_tasks);
+
+    // Undo snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Task "${task.title}" dihapus'),
+          action: SnackBarAction(
+            label: 'Undo',
+            textColor: AppTheme.primary,
+            onPressed: () {
+              setState(() => _tasks.insert(index, task));
+              _storage.saveTasks(_tasks);
+            },
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _generateSchedule() async {
@@ -97,6 +119,15 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: isError ? AppTheme.danger : null,
       ),
     );
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) newIndex--;
+      final task = _tasks.removeAt(oldIndex);
+      _tasks.insert(newIndex, task);
+    });
+    _storage.saveTasks(_tasks);
   }
 
   @override
@@ -160,6 +191,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const Spacer(),
+                  // Stats toggle button
+                  if (_tasks.isNotEmpty)
+                    _IconBtn(
+                      icon: _showStats
+                          ? Icons.bar_chart_rounded
+                          : Icons.bar_chart_outlined,
+                      isDark: isDark,
+                      isActive: _showStats,
+                      onTap: () => setState(() => _showStats = !_showStats),
+                    ),
+                  const SizedBox(width: 8),
                   _IconBtn(
                     icon: Icons.history_rounded,
                     isDark: isDark,
@@ -201,6 +243,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
+            // ── Stats card (collapsible) ────────────────────
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: _showStats && _tasks.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 14, 24, 0),
+                      child: TaskStatsCard(tasks: _tasks),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+
             const SizedBox(height: 28),
 
             // ── Task list header ────────────────────────────
@@ -237,7 +291,51 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   const Spacer(),
-                  if (_tasks.isNotEmpty)
+                  // Reorder toggle
+                  if (_tasks.length > 1)
+                    GestureDetector(
+                      onTap: () =>
+                          setState(() => _isReordering = !_isReordering),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: _isReordering
+                              ? AppTheme.accent.withOpacity(0.15)
+                              : AppTheme.primary.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(10),
+                          border: _isReordering
+                              ? Border.all(
+                                  color: AppTheme.accent.withOpacity(0.3))
+                              : null,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.swap_vert_rounded,
+                              size: 14,
+                              color: _isReordering
+                                  ? AppTheme.accent
+                                  : AppTheme.primary,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _isReordering ? 'Selesai' : 'Urutkan',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: _isReordering
+                                    ? AppTheme.accent
+                                    : AppTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (!_isReordering && _tasks.isNotEmpty) ...[
+                    const SizedBox(width: 8),
                     GestureDetector(
                       onTap: _addTask,
                       child: Container(
@@ -249,11 +347,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.add_rounded,
+                          children: const [
+                            Icon(Icons.add_rounded,
                                 size: 14, color: AppTheme.primary),
-                            const SizedBox(width: 4),
-                            const Text(
+                            SizedBox(width: 4),
+                            Text(
                               'Tambah',
                               style: TextStyle(
                                 fontSize: 12,
@@ -265,35 +363,112 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
             ),
 
-            const SizedBox(height: 14),
+            // Reorder hint
+            if (_isReordering)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded,
+                        size: 12,
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondaryLight),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Tahan dan seret untuk mengubah urutan',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isDark
+                            ? AppTheme.textSecondaryDark
+                            : AppTheme.textSecondaryLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            const SizedBox(height: 6),
 
             // ── Task list ───────────────────────────────────
             Expanded(
               child: _tasks.isEmpty
                   ? _EmptyState(isDark: isDark, onAdd: _addTask)
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
-                      itemCount: _tasks.length,
-                      itemBuilder: (_, i) => TaskCard(
-                        task: _tasks[i],
-                        onEdit: () => _editTask(i),
-                        onDelete: () => _deleteTask(i),
-                        onToggleComplete: () {
-                          setState(() =>
-                              _tasks[i].isCompleted = !_tasks[i].isCompleted);
-                          _storage.saveTasks(_tasks);
-                        },
-                      ),
-                    ),
+                  : _isReordering
+                      ? ReorderableListView.builder(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                          itemCount: _tasks.length,
+                          onReorder: _onReorder,
+                          proxyDecorator: (child, index, animation) {
+                            return AnimatedBuilder(
+                              animation: animation,
+                              builder: (_, child) => Material(
+                                color: Colors.transparent,
+                                child: child,
+                              ),
+                              child: child,
+                            );
+                          },
+                          itemBuilder: (_, i) => KeyedSubtree(
+                            key: ValueKey(_tasks[i].id),
+                            child: Stack(
+                              children: [
+                                TaskCard(
+                                  task: _tasks[i],
+                                  onEdit: () => _editTask(i),
+                                  onDelete: () => _deleteTask(i),
+                                  onToggleComplete: () {
+                                    setState(() => _tasks[i].isCompleted =
+                                        !_tasks[i].isCompleted);
+                                    _storage.saveTasks(_tasks);
+                                  },
+                                ),
+                                // Drag handle indicator
+                                Positioned(
+                                  right: 8,
+                                  top: 0,
+                                  bottom: 12,
+                                  child: Icon(
+                                    Icons.drag_handle_rounded,
+                                    size: 18,
+                                    color: isDark
+                                        ? AppTheme.textSecondaryDark
+                                            .withOpacity(0.4)
+                                        : AppTheme.textSecondaryLight
+                                            .withOpacity(0.4),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                          itemCount: _tasks.length,
+                          itemBuilder: (_, i) => _SwipeToDismissTask(
+                            key: ValueKey(_tasks[i].id),
+                            task: _tasks[i],
+                            isDark: isDark,
+                            onEdit: () => _editTask(i),
+                            onDelete: () => _deleteTask(i),
+                            onToggleComplete: () {
+                              setState(() => _tasks[i].isCompleted =
+                                  !_tasks[i].isCompleted);
+                              _storage.saveTasks(_tasks);
+                            },
+                          ),
+                        ),
             ),
           ],
         ),
       ),
-      floatingActionButton: _tasks.isEmpty
+      floatingActionButton: _tasks.isEmpty || _isReordering
           ? null
           : FloatingActionButton(
               onPressed: _addTask,
@@ -307,17 +482,81 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+// ── Swipe to dismiss wrapper ─────────────────────────────
+
+class _SwipeToDismissTask extends StatelessWidget {
+  final Task task;
+  final bool isDark;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final VoidCallback onToggleComplete;
+
+  const _SwipeToDismissTask({
+    super.key,
+    required this.task,
+    required this.isDark,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onToggleComplete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: ValueKey(task.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        onDelete();
+        return false; // We handle deletion ourselves with undo
+      },
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.danger.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.danger.withOpacity(0.3), width: 1),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.delete_outline_rounded,
+                color: AppTheme.danger, size: 22),
+            SizedBox(height: 4),
+            Text(
+              'Hapus',
+              style: TextStyle(
+                  color: AppTheme.danger,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+      child: TaskCard(
+        task: task,
+        onEdit: onEdit,
+        onDelete: onDelete,
+        onToggleComplete: onToggleComplete,
+      ),
+    );
+  }
+}
+
 // ── Icon Button ──────────────────────────────────────────
 
 class _IconBtn extends StatelessWidget {
   final IconData icon;
   final bool isDark;
+  final bool isActive;
   final VoidCallback onTap;
 
   const _IconBtn({
     required this.icon,
     required this.isDark,
     required this.onTap,
+    this.isActive = false,
   });
 
   @override
@@ -328,10 +567,14 @@ class _IconBtn extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: isDark ? AppTheme.cardDark : Colors.white,
+          color: isActive
+              ? AppTheme.primary.withOpacity(0.12)
+              : (isDark ? AppTheme.cardDark : Colors.white),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+            color: isActive
+                ? AppTheme.primary.withOpacity(0.3)
+                : (isDark ? AppTheme.borderDark : AppTheme.borderLight),
             width: 1,
           ),
           boxShadow: [
@@ -345,8 +588,11 @@ class _IconBtn extends StatelessWidget {
         child: Icon(
           icon,
           size: 18,
-          color:
-              isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+          color: isActive
+              ? AppTheme.primary
+              : (isDark
+                  ? AppTheme.textSecondaryDark
+                  : AppTheme.textSecondaryLight),
         ),
       ),
     );
@@ -405,7 +651,6 @@ class _HeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -462,7 +707,6 @@ class _HeroCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Generate button
               GestureDetector(
                 onTap: isGenerating ? null : onGenerate,
                 child: AnimatedContainer(
@@ -513,7 +757,6 @@ class _HeroCard extends StatelessWidget {
           ),
           if (total > 0) ...[
             const SizedBox(height: 20),
-            // Progress bar
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
