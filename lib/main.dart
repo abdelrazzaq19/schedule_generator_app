@@ -1,7 +1,8 @@
+import 'package:Schedule_generator_app/core/theme.dart';
+import 'package:Schedule_generator_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/theme.dart';
-import 'screens/home_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

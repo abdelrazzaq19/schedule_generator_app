@@ -1,4 +1,4 @@
-name: jadwalkoe
+name: Schedule_generator_app
 description: AI-powered Schedule Generator App
 publish_to: 'none'
 version: 1.0.0+1
@@ -13,6 +13,7 @@ dependencies:
   intl: ^0.19.0
   uuid: ^4.5.1
   http: ^1.2.0        # ← tambah ini
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -21,3 +22,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icons/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/schedule.png"
+  adaptive_icon_background: "#000000"

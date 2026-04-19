@@ -1,8 +1,9 @@
+import 'package:Schedule_generator_app/core/theme.dart';
+import 'package:Schedule_generator_app/models/task_model.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
-import '../core/theme.dart';
-import '../models/task_model.dart';
+
 
 class AddTaskScreen extends StatefulWidget {
   final Task? task;
@@ -61,155 +62,291 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+    final cardColor = isDark ? AppTheme.cardDark : Colors.white;
+    final borderColor = isDark ? AppTheme.borderDark : AppTheme.borderLight;
+
     return Scaffold(
-      appBar:
-          AppBar(title: Text(widget.task == null ? 'Add Task' : 'Edit Task')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _titleCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Task Title',
-                  hintText: 'e.g., Write project report',
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Title wajib diisi' : null,
+      appBar: AppBar(
+        title: Text(widget.task == null ? 'Tambah Task' : 'Edit Task'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            // Title input
+            _SectionLabel('Nama Task', isDark: isDark),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _titleCtrl,
+              style: TextStyle(color: textPrimary, fontSize: 15),
+              decoration: const InputDecoration(
+                hintText: 'Contoh: Buat laporan mingguan',
               ),
-              const SizedBox(height: 24),
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Nama task harus diisi'
+                  : null,
+            ),
 
-              // Duration Slider
-              Row(
-                children: [
-                  const Text('Duration',
-                      style: TextStyle(fontWeight: FontWeight.w500)),
-                  const Spacer(),
-                  Text('$_duration min',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.primary)),
-                ],
-              ),
-              Slider(
-                value: _duration.toDouble(),
-                min: 15,
-                max: 240,
-                divisions: 15,
-                label: '$_duration min',
-                activeColor: AppTheme.primary,
-                onChanged: (v) => setState(() => _duration = v.round()),
-              ),
-              const SizedBox(height: 8),
+            const SizedBox(height: 24),
 
-              // Priority
-              const Text('Priority',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  _PriorityChip(
-                      label: 'Low',
-                      value: 1,
-                      color: Colors.green,
-                      selected: _priority == 1,
-                      onTap: () => setState(() => _priority = 1)),
-                  const SizedBox(width: 8),
-                  _PriorityChip(
-                      label: 'Medium',
-                      value: 2,
-                      color: Colors.orange,
-                      selected: _priority == 2,
-                      onTap: () => setState(() => _priority = 2)),
-                  const SizedBox(width: 8),
-                  _PriorityChip(
-                      label: 'High',
-                      value: 3,
-                      color: Colors.red,
-                      selected: _priority == 3,
-                      onTap: () => setState(() => _priority = 3)),
-                ],
+            // Duration
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: borderColor, width: 1),
               ),
-              const SizedBox(height: 24),
-
-              // Deadline
-              const Text('Deadline (Optional)',
-                  style: TextStyle(fontWeight: FontWeight.w500)),
-              const SizedBox(height: 8),
-              Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: _pickDeadline,
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: Text(_deadline != null
-                        ? DateFormat('dd MMM yyyy').format(_deadline!)
-                        : 'Set Deadline'),
+                  Row(
+                    children: [
+                      _SectionLabel('Durasi', isDark: isDark),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$_duration menit',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  if (_deadline != null) ...[
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.red),
-                      onPressed: () => setState(() => _deadline = null),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 4,
+                      thumbShape:
+                          const RoundSliderThumbShape(enabledThumbRadius: 7),
+                      overlayShape:
+                          const RoundSliderOverlayShape(overlayRadius: 16),
                     ),
-                  ],
+                    child: Slider(
+                      value: _duration.toDouble(),
+                      min: 15,
+                      max: 240,
+                      divisions: 15,
+                      onChanged: (v) => setState(() => _duration = v.round()),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Text('15m',
+                          style: TextStyle(fontSize: 11, color: textSecondary)),
+                      const Spacer(),
+                      Text('4h',
+                          style: TextStyle(fontSize: 11, color: textSecondary)),
+                    ],
+                  ),
                 ],
               ),
-              const SizedBox(height: 32),
+            ),
 
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  child: Text(
-                      widget.task == null ? 'Add Task' : 'Save Changes'),
+            const SizedBox(height: 20),
+
+            // Priority
+            _SectionLabel('Prioritas', isDark: isDark),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _PriorityCard(
+                    label: 'Rendah',
+                    icon: '↓',
+                    value: 1,
+                    color: const Color(0xFF4CAF79),
+                    selected: _priority == 1,
+                    isDark: isDark,
+                    onTap: () => setState(() => _priority = 1),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PriorityCard(
+                    label: 'Sedang',
+                    icon: '→',
+                    value: 2,
+                    color: AppTheme.accent,
+                    selected: _priority == 2,
+                    isDark: isDark,
+                    onTap: () => setState(() => _priority = 2),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _PriorityCard(
+                    label: 'Tinggi',
+                    icon: '↑',
+                    value: 3,
+                    color: AppTheme.danger,
+                    selected: _priority == 3,
+                    isDark: isDark,
+                    onTap: () => setState(() => _priority = 3),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Deadline
+            _SectionLabel('Deadline', isDark: isDark),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: _pickDeadline,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: borderColor, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.calendar_month_outlined,
+                        size: 18, color: textSecondary),
+                    const SizedBox(width: 10),
+                    Text(
+                      _deadline != null
+                          ? DateFormat('dd MMMM yyyy').format(_deadline!)
+                          : 'Pilih tanggal (opsional)',
+                      style: TextStyle(
+                        color: _deadline != null ? textPrimary : textSecondary,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_deadline != null)
+                      GestureDetector(
+                        onTap: () => setState(() => _deadline = null),
+                        child: const Icon(Icons.close_rounded,
+                            size: 16, color: AppTheme.danger),
+                      ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 36),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submit,
+                child: Text(
+                    widget.task == null ? 'Tambah Task' : 'Simpan Perubahan'),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
     );
   }
 }
 
-class _PriorityChip extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  final bool isDark;
+  const _SectionLabel(this.text, {required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color:
+            isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+}
+
+class _PriorityCard extends StatelessWidget {
   final String label;
+  final String icon;
   final int value;
   final Color color;
   final bool selected;
+  final bool isDark;
   final VoidCallback onTap;
 
-  const _PriorityChip({
+  const _PriorityCard({
     required this.label,
+    required this.icon,
     required this.value,
     required this.color,
     required this.selected,
+    required this.isDark,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = isDark ? AppTheme.cardDark : Colors.white;
+    final borderColor = isDark ? AppTheme.borderDark : AppTheme.borderLight;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.12) : Colors.grey.shade100,
+          color: selected ? color.withOpacity(0.1) : cardColor,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-              color: selected ? color : Colors.grey.shade300,
-              width: selected ? 2 : 1),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? color : Colors.grey.shade600,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+            color: selected ? color : borderColor,
+            width: selected ? 1.5 : 1,
           ),
+        ),
+        child: Column(
+          children: [
+            Text(icon,
+                style: TextStyle(
+                  fontSize: 20,
+                  color: selected
+                      ? color
+                      : (isDark
+                          ? AppTheme.textSecondaryDark
+                          : AppTheme.textSecondaryLight),
+                )),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                color: selected
+                    ? color
+                    : (isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryLight),
+              ),
+            ),
+          ],
         ),
       ),
     );

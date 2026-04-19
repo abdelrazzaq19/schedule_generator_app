@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="jadwalkoe_app"
+        android:label="Schedule_Ai"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

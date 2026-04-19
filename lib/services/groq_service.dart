@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:Schedule_generator_app/models/app_settings_model.dart';
+import 'package:Schedule_generator_app/models/schedule_item_model.dart';
+import 'package:Schedule_generator_app/models/task_model.dart';
 import 'package:http/http.dart' as http;
-import '../models/task_model.dart';
-import '../models/app_settings_model.dart';
-import '../models/schedule_item_model.dart';
+
 
 class GroqService {
   static const String _apiKey = 'YOUR_GROQ_API_KEY'; // Ganti dengan API key Anda, atau gunakan API pada .env

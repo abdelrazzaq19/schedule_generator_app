@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:Schedule_generator_app/core/theme.dart';
+import 'package:Schedule_generator_app/models/schedule_item_model.dart';
+import 'package:Schedule_generator_app/screens/saved_schedules_screen.dart';
+import 'package:Schedule_generator_app/services/storage_service.dart';
+import 'package:Schedule_generator_app/widgets/schedule_item_card.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
-import '../models/schedule_item_model.dart';
-import '../services/storage_service.dart';
-import '../widgets/schedule_item_card.dart';
-import 'saved_schedules_screen.dart';
+
 
 class ScheduleScreen extends StatelessWidget {
   final List<ScheduleItem> schedule;
@@ -15,22 +17,41 @@ class ScheduleScreen extends StatelessWidget {
       text: 'Jadwal ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
     );
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     final name = await showDialog<String>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Simpan Jadwal'),
+        backgroundColor: isDark ? AppTheme.cardDark : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Simpan Jadwal',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
         content: TextField(
           controller: nameController,
-          decoration: const InputDecoration(
-            labelText: 'Nama Jadwal',
+          style: TextStyle(
+              color: isDark
+                  ? AppTheme.textPrimaryDark
+                  : AppTheme.textPrimaryLight),
+          decoration: InputDecoration(
+            labelText: 'Nama jadwal',
             hintText: 'Contoh: Jadwal Senin',
+            filled: true,
+            fillColor: isDark ? AppTheme.surfaceDark : AppTheme.bgLight,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
           ),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text('Batal',
+                style: TextStyle(
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryLight)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, nameController.text.trim()),
@@ -54,8 +75,8 @@ class ScheduleScreen extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ Jadwal berhasil disimpan!'),
-          backgroundColor: Colors.green,
+          content: Text('Jadwal berhasil disimpan!'),
+          backgroundColor: AppTheme.primary,
         ),
       );
     }
@@ -63,70 +84,120 @@ class ScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat('EEEE, dd MMMM yyyy').format(DateTime.now());
-    final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+    final today = DateFormat('EEEE, d MMMM').format(DateTime.now());
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Generated Schedule'),
+        title: const Text('Jadwal Hari Ini'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark_outline),
-            tooltip: 'Simpan Jadwal',
+            icon: const Icon(Icons.bookmark_outline_rounded, size: 22),
             onPressed: () => _saveSchedule(context),
+            tooltip: 'Simpan Jadwal',
           ),
           IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'Jadwal Tersimpan',
+            icon: const Icon(Icons.history_rounded, size: 22),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const SavedSchedulesScreen()),
+              MaterialPageRoute(builder: (_) => const SavedSchedulesScreen()),
             ),
           ),
         ],
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Info banner
           Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppTheme.primary.withOpacity(0.2), width: 1),
+            ),
             child: Row(
               children: [
-                Icon(Icons.auto_awesome, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.auto_awesome_rounded,
+                      color: AppTheme.primary, size: 16),
+                ),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('AI-Optimized Schedule',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    Text('Dioptimalkan oleh AI',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: textPrimary,
+                        )),
                     Text(today,
                         style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12)),
+                          fontSize: 12,
+                          color: textSecondary,
+                        )),
                   ],
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${schedule.length} item',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+
+          const SizedBox(height: 16),
+
           Expanded(
             child: schedule.isEmpty
-                ? const Center(child: Text('Tidak ada jadwal.'))
+                ? Center(
+                    child: Text('Tidak ada jadwal.',
+                        style: TextStyle(color: textSecondary)))
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                     itemCount: schedule.length,
-                    itemBuilder: (_, i) =>
-                        ScheduleItemCard(item: schedule[i]),
+                    itemBuilder: (_, i) => ScheduleItemCard(item: schedule[i]),
                   ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _saveSchedule(context),
-        icon: const Icon(Icons.bookmark_add),
-        label: const Text('Simpan Jadwal'),
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.bookmark_add_rounded),
+        label: const Text('Simpan Jadwal',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
       ),
     );
   }

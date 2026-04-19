@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
-import '../models/task_model.dart';
-import '../models/app_settings_model.dart';
-import '../services/storage_service.dart';
-import '../services/groq_service.dart';
-import '../widgets/task_card.dart';
+import 'package:Schedule_generator_app/core/theme.dart';
+import 'package:Schedule_generator_app/models/app_settings_model.dart';
+import 'package:Schedule_generator_app/models/task_model.dart';
+import 'package:Schedule_generator_app/screens/schedule_screen.dart';
+import 'package:Schedule_generator_app/screens/settings_screen.dart';
+import 'package:Schedule_generator_app/services/groq_service.dart';
+import 'package:Schedule_generator_app/services/storage_service.dart';
+import 'package:Schedule_generator_app/widgets/task_card.dart';
+
 import 'add_task_screen.dart';
-import 'schedule_screen.dart';
-import 'settings_screen.dart';
 import 'saved_schedules_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -72,7 +73,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _showSnackBar('Tidak ada task pending untuk dijadwalkan.');
       return;
     }
-
     setState(() => _isGenerating = true);
     try {
       final schedule =
@@ -81,8 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         Navigator.push(
           context,
-          MaterialPageRoute(
-              builder: (_) => ScheduleScreen(schedule: schedule)),
+          MaterialPageRoute(builder: (_) => ScheduleScreen(schedule: schedule)),
         );
       }
     } catch (e) {
@@ -96,146 +95,421 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: isError ? Colors.red : null,
+        backgroundColor: isError ? AppTheme.danger : null,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pendingCount = _tasks.where((t) => !t.isCompleted).length;
+    final completedCount = _tasks.where((t) => t.isCompleted).length;
+
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('JadwalKoe'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.history),
-            tooltip: 'Jadwal Tersimpan',
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const SavedSchedulesScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () async {
-              await Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const SettingsScreen()));
-              _loadData();
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Summary + Generate Card
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.primary, Color(0xFF9C88FF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
+      backgroundColor: isDark ? AppTheme.bgDark : AppTheme.bgLight,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              child: Row(
+                children: [
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Today's Tasks",
-                          style:
-                              TextStyle(color: Colors.white70, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      Text('$pendingCount pending',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold)),
+                      Text(
+                        'ScheduleAI',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: textPrimary,
+                          letterSpacing: -0.8,
+                        ),
+                      ),
+                      Text(
+                        'AI Schedule Generator',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: textSecondary,
+                          letterSpacing: 0.1,
+                        ),
+                      ),
                     ],
                   ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: _isGenerating ? null : _generateSchedule,
-                  icon: _isGenerating
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white))
-                      : const Icon(Icons.auto_awesome, size: 18),
-                  label: Text(_isGenerating ? 'Generating...' : 'Generate'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppTheme.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Task list header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                const Text('Tasks',
-                    style: TextStyle(
-                        fontSize: 17, fontWeight: FontWeight.w600)),
-                const Spacer(),
-                Text('${_tasks.length} total',
-                    style: TextStyle(
-                        color: Colors.grey.shade500, fontSize: 13)),
-              ],
-            ),
-          ),
-
-          // Task list
-          Expanded(
-            child: _tasks.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.task_alt,
-                            size: 64, color: Colors.grey.shade300),
-                        const SizedBox(height: 12),
-                        Text('Belum ada task',
-                            style: TextStyle(
-                                color: Colors.grey.shade500, fontSize: 16)),
-                        const SizedBox(height: 4),
-                        Text('Tap + untuk menambah task pertama',
-                            style: TextStyle(
-                                color: Colors.grey.shade400, fontSize: 13)),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: _tasks.length,
-                    itemBuilder: (_, i) => TaskCard(
-                      task: _tasks[i],
-                      onEdit: () => _editTask(i),
-                      onDelete: () => _deleteTask(i),
-                      onToggleComplete: () {
-                        setState(() =>
-                            _tasks[i].isCompleted = !_tasks[i].isCompleted);
-                        _storage.saveTasks(_tasks);
-                      },
+                  const Spacer(),
+                  _IconBtn(
+                    icon: Icons.history_rounded,
+                    isDark: isDark,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const SavedSchedulesScreen()),
                     ),
                   ),
-          ),
-        ],
+                  const SizedBox(width: 8),
+                  _IconBtn(
+                    icon: Icons.tune_rounded,
+                    isDark: isDark,
+                    onTap: () async {
+                      await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsScreen()));
+                      _loadData();
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Hero stats + generate card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: _HeroCard(
+                pendingCount: pendingCount,
+                completedCount: completedCount,
+                total: _tasks.length,
+                isGenerating: _isGenerating,
+                onGenerate: _generateSchedule,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Task list header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                children: [
+                  Text(
+                    'Tasks',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_tasks.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Task list
+            Expanded(
+              child: _tasks.isEmpty
+                  ? _EmptyState(isDark: isDark, onAdd: _addTask)
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      itemCount: _tasks.length,
+                      itemBuilder: (_, i) => TaskCard(
+                        task: _tasks[i],
+                        onEdit: () => _editTask(i),
+                        onDelete: () => _deleteTask(i),
+                        onToggleComplete: () {
+                          setState(() =>
+                              _tasks[i].isCompleted = !_tasks[i].isCompleted);
+                          _storage.saveTasks(_tasks);
+                        },
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addTask,
         backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add_rounded, size: 26),
+      ),
+    );
+  }
+}
+
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _IconBtn({
+    required this.icon,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: isDark ? AppTheme.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color:
+              isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight,
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroCard extends StatelessWidget {
+  final int pendingCount;
+  final int completedCount;
+  final int total;
+  final bool isGenerating;
+  final VoidCallback onGenerate;
+
+  const _HeroCard({
+    required this.pendingCount,
+    required this.completedCount,
+    required this.total,
+    required this.isGenerating,
+    required this.onGenerate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = total == 0 ? 0.0 : completedCount / total;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF00C896), Color(0xFF00A87E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primary.withOpacity(0.35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$pendingCount',
+                      style: const TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -2,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'tasks pending',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        letterSpacing: 0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: isGenerating ? null : onGenerate,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.12),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: isGenerating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: AppTheme.primary,
+                          ),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.auto_awesome_rounded,
+                                size: 16, color: AppTheme.primary),
+                            SizedBox(width: 6),
+                            Text(
+                              'Generate',
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Progress bar
+          if (total > 0) ...[
+            Row(
+              children: [
+                Text(
+                  '$completedCount/$total selesai',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Colors.white.withOpacity(0.25),
+                color: Colors.white,
+                minHeight: 5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onAdd;
+
+  const _EmptyState({required this.isDark, required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppTheme.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle_outline_rounded,
+              size: 38,
+              color: AppTheme.primary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Belum ada task',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color:
+                  isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Tap + untuk mulai menambahkan task',
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark
+                  ? AppTheme.textSecondaryDark
+                  : AppTheme.textSecondaryLight,
+            ),
+          ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+            onPressed: onAdd,
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('Tambah Task'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primary,
+              backgroundColor: AppTheme.primary.withOpacity(0.1),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
       ),
     );
   }

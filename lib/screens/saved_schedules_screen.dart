@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:Schedule_generator_app/core/theme.dart';
+import 'package:Schedule_generator_app/services/storage_service.dart';
+import 'package:Schedule_generator_app/widgets/schedule_item_card.dart';
 import 'package:intl/intl.dart';
-import '../services/storage_service.dart';
-import '../widgets/schedule_item_card.dart';
+
 
 class SavedSchedulesScreen extends StatefulWidget {
   const SavedSchedulesScreen({super.key});
@@ -30,18 +32,33 @@ class _SavedSchedulesScreenState extends State<SavedSchedulesScreen> {
   }
 
   Future<void> _delete(SavedSchedule s) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Hapus Jadwal?'),
-        content: Text('Jadwal "${s.name}" akan dihapus permanen.'),
+        backgroundColor: isDark ? AppTheme.cardDark : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Hapus Jadwal?',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17)),
+        content: Text(
+          '"${s.name}" akan dihapus permanen.',
+          style: TextStyle(
+              color: isDark
+                  ? AppTheme.textSecondaryDark
+                  : AppTheme.textSecondaryLight),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal')),
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Batal',
+                style: TextStyle(
+                    color: isDark
+                        ? AppTheme.textSecondaryDark
+                        : AppTheme.textSecondaryLight)),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.danger),
             child: const Text('Hapus'),
           ),
         ],
@@ -52,77 +69,125 @@ class _SavedSchedulesScreenState extends State<SavedSchedulesScreen> {
     _load();
   }
 
-  void _viewDetail(SavedSchedule s) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => _ScheduleDetailScreen(saved: s)),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+    final cardColor = isDark ? AppTheme.cardDark : Colors.white;
+    final borderColor = isDark ? AppTheme.borderDark : AppTheme.borderLight;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Jadwal Tersimpan')),
+      appBar: AppBar(
+        title: const Text('Jadwal Tersimpan'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(color: AppTheme.primary))
           : _schedules.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.bookmark_border,
-                          size: 64, color: Colors.grey.shade300),
-                      const SizedBox(height: 12),
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.bookmark_border_rounded,
+                          size: 38,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
                       Text('Belum ada jadwal tersimpan',
                           style: TextStyle(
-                              color: Colors.grey.shade500, fontSize: 16)),
-                      const SizedBox(height: 4),
-                      Text('Generate jadwal lalu tekan "Simpan Jadwal"',
-                          style: TextStyle(
-                              color: Colors.grey.shade400, fontSize: 13)),
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: textPrimary,
+                            letterSpacing: -0.3,
+                          )),
+                      const SizedBox(height: 6),
+                      Text('Generate lalu simpan jadwal pertama Anda',
+                          style: TextStyle(fontSize: 13, color: textSecondary)),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   itemCount: _schedules.length,
                   itemBuilder: (_, i) {
                     final s = _schedules[i];
-                    final dateStr = DateFormat('dd MMM yyyy, HH:mm')
-                        .format(s.savedAt);
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
-                        leading: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.calendar_today,
-                              color: Theme.of(context).colorScheme.primary,
-                              size: 20),
+                    final dateStr =
+                        DateFormat('d MMM yyyy · HH:mm').format(s.savedAt);
+                    return GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => _ScheduleDetailScreen(saved: s)),
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: borderColor, width: 1),
                         ),
-                        title: Text(s.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600)),
-                        subtitle: Text(
-                          '$dateStr  •  ${s.items.length} item',
-                          style: TextStyle(
-                              color: Colors.grey.shade500, fontSize: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.calendar_month_rounded,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(s.name,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: textPrimary,
+                                        letterSpacing: -0.2,
+                                      )),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '$dateStr  ·  ${s.items.length} item',
+                                    style: TextStyle(
+                                      color: textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  color: AppTheme.danger, size: 18),
+                              onPressed: () => _delete(s),
+                            ),
+                          ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.red),
-                          onPressed: () => _delete(s),
-                        ),
-                        onTap: () => _viewDetail(s),
                       ),
                     );
                   },
@@ -138,44 +203,66 @@ class _ScheduleDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final dateStr =
-        DateFormat('EEEE, dd MMMM yyyy').format(saved.savedAt);
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+    final textSecondary =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+    final dateStr = DateFormat('EEEE, d MMMM yyyy').format(saved.savedAt);
 
     return Scaffold(
-      appBar: AppBar(title: Text(saved.name)),
+      appBar: AppBar(
+        title: Text(saved.name),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: Column(
         children: [
+          // Info bar
           Container(
-            width: double.infinity,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+            margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppTheme.accent.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+              border:
+                  Border.all(color: AppTheme.accent.withOpacity(0.2), width: 1),
+            ),
             child: Row(
               children: [
-                Icon(Icons.bookmark,
-                    color: Theme.of(context).colorScheme.primary, size: 20),
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accent.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.bookmark_rounded,
+                      color: AppTheme.accent, size: 15),
+                ),
                 const SizedBox(width: 10),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(saved.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w600)),
-                    Text('Disimpan: $dateStr',
                         style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 12)),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: textPrimary,
+                        )),
+                    Text('Disimpan: $dateStr',
+                        style: TextStyle(fontSize: 11, color: textSecondary)),
                   ],
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+          const SizedBox(height: 12),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
               itemCount: saved.items.length,
-              itemBuilder: (_, i) =>
-                  ScheduleItemCard(item: saved.items[i]),
+              itemBuilder: (_, i) => ScheduleItemCard(item: saved.items[i]),
             ),
           ),
         ],

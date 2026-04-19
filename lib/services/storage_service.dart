@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:Schedule_generator_app/models/app_settings_model.dart';
+import 'package:Schedule_generator_app/models/schedule_item_model.dart';
+import 'package:Schedule_generator_app/models/task_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/task_model.dart';
-import '../models/app_settings_model.dart';
-import '../models/schedule_item_model.dart';
+
 
 class StorageService {
   static const _tasksKey = 'tasks';
