@@ -7,7 +7,6 @@ import 'package:Schedule_generator_app/widgets/schedule_item_card.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
-
 class ScheduleScreen extends StatelessWidget {
   final List<ScheduleItem> schedule;
   const ScheduleScreen({super.key, required this.schedule});
@@ -16,7 +15,6 @@ class ScheduleScreen extends StatelessWidget {
     final nameController = TextEditingController(
       text: 'Jadwal ${DateFormat('dd MMM yyyy').format(DateTime.now())}',
     );
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final name = await showDialog<String>(
@@ -35,6 +33,8 @@ class ScheduleScreen extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'Nama jadwal',
             hintText: 'Contoh: Jadwal Senin',
+            prefixIcon: const Icon(Icons.bookmark_rounded,
+                size: 18, color: AppTheme.primary),
             filled: true,
             fillColor: isDark ? AppTheme.surfaceDark : AppTheme.bgLight,
             border: OutlineInputBorder(
@@ -75,7 +75,7 @@ class ScheduleScreen extends StatelessWidget {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Jadwal berhasil disimpan!'),
+          content: Text('Jadwal berhasil disimpan! 🎉'),
           backgroundColor: AppTheme.primary,
         ),
       );
@@ -90,6 +90,10 @@ class ScheduleScreen extends StatelessWidget {
     final textSecondary =
         isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
     final today = DateFormat('EEEE, d MMMM').format(DateTime.now());
+
+    // Calculate task vs break count
+    final taskCount = schedule.where((s) => s.taskId != 'break').length;
+    final breakCount = schedule.where((s) => s.taskId == 'break').length;
 
     return Scaffold(
       appBar: AppBar(
@@ -116,66 +120,77 @@ class ScheduleScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Info banner
+          // ── Info banner ──────────────────────────────────
           Container(
-            margin: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            margin: const EdgeInsets.fromLTRB(24, 8, 24, 0),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(14),
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primary.withOpacity(isDark ? 0.12 : 0.08),
+                  AppTheme.primaryDark.withOpacity(isDark ? 0.06 : 0.04),
+                ],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: AppTheme.primary.withOpacity(0.2), width: 1),
+                color: AppTheme.primary.withOpacity(isDark ? 0.25 : 0.15),
+                width: 1,
+              ),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.auto_awesome_rounded,
-                      color: AppTheme.primary, size: 16),
+                      color: AppTheme.primary, size: 18),
                 ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Dioptimalkan oleh AI',
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Dioptimalkan oleh AI',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 13,
+                          fontSize: 14,
                           color: textPrimary,
-                        )),
-                    Text(today,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textSecondary,
-                        )),
-                  ],
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        today,
+                        style: TextStyle(fontSize: 12.5, color: textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '${schedule.length} item',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.primary,
-                    ),
-                  ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _StatPill(
+                        value: '$taskCount',
+                        label: 'task',
+                        color: AppTheme.primary),
+                    const SizedBox(height: 4),
+                    _StatPill(
+                        value: '$breakCount',
+                        label: 'break',
+                        color: AppTheme.accent),
+                  ],
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
           Expanded(
             child: schedule.isEmpty
@@ -183,7 +198,7 @@ class ScheduleScreen extends StatelessWidget {
                     child: Text('Tidak ada jadwal.',
                         style: TextStyle(color: textSecondary)))
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
                     itemCount: schedule.length,
                     itemBuilder: (_, i) => ScheduleItemCard(item: schedule[i]),
                   ),
@@ -194,10 +209,52 @@ class ScheduleScreen extends StatelessWidget {
         onPressed: () => _saveSchedule(context),
         backgroundColor: AppTheme.primary,
         foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.bookmark_add_rounded),
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: const Icon(Icons.bookmark_add_rounded, size: 20),
         label: const Text('Simpan Jadwal',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+      ),
+    );
+  }
+}
+
+class _StatPill extends StatelessWidget {
+  final String value;
+  final String label;
+  final Color color;
+  const _StatPill(
+      {required this.value, required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: color.withOpacity(0.8),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,11 +1,12 @@
 import 'package:Schedule_generator_app/core/theme.dart';
 import 'package:Schedule_generator_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   final prefs = await SharedPreferences.getInstance();
   final isDark = prefs.getBool('dark_mode') ?? false;
   runApp(ScheduleAIApp(initialDark: isDark));

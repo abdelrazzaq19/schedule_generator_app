@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'package:Schedule_generator_app/models/app_settings_model.dart';
 import 'package:Schedule_generator_app/models/schedule_item_model.dart';
 import 'package:Schedule_generator_app/models/task_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
-
 class GroqService {
-  static const String _apiKey = 'YOUR_GROQ_API_KEY'; // Ganti dengan API key Anda, atau gunakan API pada .env
-  static const String _apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+  static final String _apiKey = dotenv.env[
+      'GROQ_API_KEY']!; // Ganti dengan API key Anda, atau gunakan API pada .env
+  static const String _apiUrl =
+      'https://api.groq.com/openai/v1/chat/completions';
   static const String _model = 'llama-3.3-70b-versatile';
 
   Future<List<ScheduleItem>> generateSchedule({
@@ -15,7 +17,8 @@ class GroqService {
     required AppSettings settings,
   }) async {
     final pending = tasks.where((t) => !t.isCompleted).toList();
-    if (pending.isEmpty) throw Exception('Tidak ada task yang perlu dijadwalkan.');
+    if (pending.isEmpty)
+      throw Exception('Tidak ada task yang perlu dijadwalkan.');
 
     final tasksJson = pending
         .map((t) => {
@@ -73,7 +76,8 @@ Rules:
     );
 
     if (response.statusCode != 200) {
-      throw Exception('Groq API error: ${response.statusCode} - ${response.body}');
+      throw Exception(
+          'Groq API error: ${response.statusCode} - ${response.body}');
     }
 
     final data = json.decode(response.body);

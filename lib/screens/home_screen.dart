@@ -7,7 +7,6 @@ import 'package:Schedule_generator_app/screens/settings_screen.dart';
 import 'package:Schedule_generator_app/services/groq_service.dart';
 import 'package:Schedule_generator_app/services/storage_service.dart';
 import 'package:Schedule_generator_app/widgets/task_card.dart';
-
 import 'add_task_screen.dart';
 import 'saved_schedules_screen.dart';
 
@@ -117,29 +116,45 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // ── Header ──────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              padding: const EdgeInsets.fromLTRB(24, 20, 20, 0),
               child: Row(
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'ScheduleAI',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          color: textPrimary,
-                          letterSpacing: -0.8,
-                        ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            margin: const EdgeInsets.only(right: 8, top: 2),
+                            decoration: const BoxDecoration(
+                              color: AppTheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          Text(
+                            'ScheduleAI',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: textPrimary,
+                              letterSpacing: -0.8,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        'AI Schedule Generator',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
-                          letterSpacing: 0.1,
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: Text(
+                          'AI-powered daily planner',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            color: textSecondary,
+                            letterSpacing: 0.1,
+                          ),
                         ),
                       ),
                     ],
@@ -160,9 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     isDark: isDark,
                     onTap: () async {
                       await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SettingsScreen()));
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsScreen()),
+                      );
                       _loadData();
                     },
                   ),
@@ -170,65 +186,97 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
-            // Hero stats + generate card
+            // ── Hero card ───────────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: _HeroCard(
                 pendingCount: pendingCount,
                 completedCount: completedCount,
                 total: _tasks.length,
                 isGenerating: _isGenerating,
+                isDark: isDark,
                 onGenerate: _generateSchedule,
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
-            // Task list header
+            // ── Task list header ────────────────────────────
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Row(
                 children: [
                   Text(
                     'Tasks',
                     style: TextStyle(
-                      fontSize: 17,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: textPrimary,
-                      letterSpacing: -0.3,
+                      letterSpacing: -0.4,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${_tasks.length}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primary,
+                  if (_tasks.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${_tasks.length}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primary,
+                          letterSpacing: 0.2,
+                        ),
                       ),
                     ),
-                  ),
+                  const Spacer(),
+                  if (_tasks.isNotEmpty)
+                    GestureDetector(
+                      onTap: _addTask,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add_rounded,
+                                size: 14, color: AppTheme.primary),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'Tambah',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // Task list
+            // ── Task list ───────────────────────────────────
             Expanded(
               child: _tasks.isEmpty
                   ? _EmptyState(isDark: isDark, onAdd: _addTask)
                   : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
                       itemCount: _tasks.length,
                       itemBuilder: (_, i) => TaskCard(
                         task: _tasks[i],
@@ -245,17 +293,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addTask,
-        backgroundColor: AppTheme.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add_rounded, size: 26),
-      ),
+      floatingActionButton: _tasks.isEmpty
+          ? null
+          : FloatingActionButton(
+              onPressed: _addTask,
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              elevation: 6,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add_rounded, size: 26),
+            ),
     );
   }
 }
+
+// ── Icon Button ──────────────────────────────────────────
 
 class _IconBtn extends StatelessWidget {
   final IconData icon;
@@ -282,6 +334,13 @@ class _IconBtn extends StatelessWidget {
             color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
             width: 1,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Icon(
           icon,
@@ -294,11 +353,14 @@ class _IconBtn extends StatelessWidget {
   }
 }
 
+// ── Hero Card ──────────────────────────────────────────────
+
 class _HeroCard extends StatelessWidget {
   final int pendingCount;
   final int completedCount;
   final int total;
   final bool isGenerating;
+  final bool isDark;
   final VoidCallback onGenerate;
 
   const _HeroCard({
@@ -306,6 +368,7 @@ class _HeroCard extends StatelessWidget {
     required this.completedCount,
     required this.total,
     required this.isGenerating,
+    required this.isDark,
     required this.onGenerate,
   });
 
@@ -314,19 +377,21 @@ class _HeroCard extends StatelessWidget {
     final progress = total == 0 ? 0.0 : completedCount / total;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF00C896), Color(0xFF00A87E)],
+          colors: [Color(0xFF00C896), Color(0xFF00A87E), Color(0xFF008F6A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
+          stops: [0.0, 0.6, 1.0],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primary.withOpacity(0.35),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+            color: AppTheme.primary.withOpacity(0.4),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+            spreadRadius: -4,
           ),
         ],
       ),
@@ -340,66 +405,104 @@ class _HeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '$pendingCount',
-                      style: const TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -2,
-                        height: 1,
+                    // Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(Icons.auto_awesome_rounded,
+                              size: 11, color: Colors.white),
+                          SizedBox(width: 4),
+                          Text(
+                            'AI SCHEDULER',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$pendingCount',
+                            style: const TextStyle(
+                              fontSize: 48,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -3,
+                              height: 0.95,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      'tasks pending',
+                    Text(
+                      pendingCount == 1 ? 'task pending' : 'tasks pending',
                       style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
+                        color: Colors.white.withOpacity(0.75),
+                        fontSize: 13.5,
                         letterSpacing: 0.1,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 16),
+              // Generate button
               GestureDetector(
                 onTap: isGenerating ? null : onGenerate,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.12),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                        spreadRadius: -2,
                       ),
                     ],
                   ),
                   child: isGenerating
                       ? const SizedBox(
-                          width: 18,
-                          height: 18,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.5,
                             color: AppTheme.primary,
                           ),
                         )
-                      : Row(
+                      : Column(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
                             Icon(Icons.auto_awesome_rounded,
-                                size: 16, color: AppTheme.primary),
-                            SizedBox(width: 6),
+                                size: 20, color: AppTheme.primary),
+                            SizedBox(height: 6),
                             Text(
                               'Generate',
                               style: TextStyle(
                                 color: AppTheme.primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ],
@@ -408,40 +511,44 @@ class _HeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // Progress bar
           if (total > 0) ...[
-            Row(
+            const SizedBox(height: 20),
+            // Progress bar
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '$completedCount/$total selesai',
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      '$completedCount dari $total selesai',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${(progress * 100).round()}%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
                 ),
-                const Spacer(),
-                Text(
-                  '${(progress * 100).round()}%',
-                  style: const TextStyle(
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    backgroundColor: Colors.white.withOpacity(0.2),
                     color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    minHeight: 6,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: progress,
-                backgroundColor: Colors.white.withOpacity(0.25),
-                color: Colors.white,
-                minHeight: 5,
-              ),
             ),
           ],
         ],
@@ -449,6 +556,8 @@ class _HeroCard extends StatelessWidget {
     );
   }
 }
+
+// ── Empty State ──────────────────────────────────────────
 
 class _EmptyState extends StatelessWidget {
   final bool isDark;
@@ -459,57 +568,66 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.08),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    size: 28,
+                    color: AppTheme.primary,
+                  ),
+                ),
+              ),
             ),
-            child: const Icon(
-              Icons.check_circle_outline_rounded,
-              size: 38,
-              color: AppTheme.primary,
+            const SizedBox(height: 24),
+            Text(
+              'Belum ada task',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: isDark
+                    ? AppTheme.textPrimaryDark
+                    : AppTheme.textPrimaryLight,
+                letterSpacing: -0.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Belum ada task',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color:
-                  isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight,
-              letterSpacing: -0.3,
+            const SizedBox(height: 8),
+            Text(
+              'Mulai tambahkan task dan biarkan AI mengaturkan jadwal harimu',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13.5,
+                color: isDark
+                    ? AppTheme.textSecondaryDark
+                    : AppTheme.textSecondaryLight,
+                height: 1.5,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Tap + untuk mulai menambahkan task',
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark
-                  ? AppTheme.textSecondaryDark
-                  : AppTheme.textSecondaryLight,
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Tambah Task Pertama'),
             ),
-          ),
-          const SizedBox(height: 24),
-          TextButton.icon(
-            onPressed: onAdd,
-            icon: const Icon(Icons.add_rounded, size: 18),
-            label: const Text('Tambah Task'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppTheme.primary,
-              backgroundColor: AppTheme.primary.withOpacity(0.1),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

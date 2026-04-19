@@ -4,7 +4,6 @@ import 'package:Schedule_generator_app/main.dart';
 import 'package:Schedule_generator_app/models/app_settings_model.dart';
 import 'package:Schedule_generator_app/services/storage_service.dart';
 
-
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -34,10 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _saving = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Settings tersimpan!'),
-          backgroundColor: AppTheme.primary,
-        ),
+        const SnackBar(content: Text('Settings tersimpan!')),
       );
     }
   }
@@ -79,11 +75,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
         children: [
-          // Appearance
+          // ── Appearance ────────────────────────────────────
           _GroupLabel('Tampilan', textSecondary: textSecondary),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _SettingsCard(
             isDark: isDark,
             cardColor: cardColor,
@@ -93,6 +89,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: isAppDark
                     ? Icons.nights_stay_rounded
                     : Icons.wb_sunny_rounded,
+                iconColor:
+                    isAppDark ? const Color(0xFF818CF8) : AppTheme.accent,
                 title: 'Dark Mode',
                 subtitle: isAppDark ? 'Tema gelap aktif' : 'Tema terang aktif',
                 value: isAppDark,
@@ -103,11 +101,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
-          // Work hours
+          // ── Work Hours ────────────────────────────────────
           _GroupLabel('Jam Kerja', textSecondary: textSecondary),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _SettingsCard(
             isDark: isDark,
             cardColor: cardColor,
@@ -115,15 +113,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _TimeRow(
                 icon: Icons.wb_twilight_rounded,
+                iconColor: const Color(0xFFFF9500),
                 title: 'Jam Mulai',
                 time: _settings.workStartTime,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 onTap: () => _pickTime(true),
               ),
-              Divider(height: 1, color: borderColor, indent: 52),
+              _Divider(borderColor: borderColor),
               _TimeRow(
                 icon: Icons.dark_mode_outlined,
+                iconColor: const Color(0xFF818CF8),
                 title: 'Jam Selesai',
                 time: _settings.workEndTime,
                 textPrimary: textPrimary,
@@ -133,11 +133,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
-          // Break settings
+          // ── Break Settings ────────────────────────────────
           _GroupLabel('Pengaturan Break', textSecondary: textSecondary),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           _SettingsCard(
             isDark: isDark,
             cardColor: cardColor,
@@ -145,6 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               _StepperRow(
                 icon: Icons.coffee_rounded,
+                iconColor: AppTheme.accent,
                 title: 'Durasi Break',
                 value: _settings.breakDuration,
                 unit: 'menit',
@@ -154,12 +155,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 borderColor: borderColor,
+                isDark: isDark,
                 onChanged: (v) => setState(
                     () => _settings = _settings.copyWith(breakDuration: v)),
               ),
-              Divider(height: 1, color: borderColor, indent: 52),
+              _Divider(borderColor: borderColor),
               _StepperRow(
-                icon: Icons.timer_outlined,
+                icon: Icons.timer_rounded,
+                iconColor: AppTheme.info,
                 title: 'Break setiap',
                 value: _settings.breakInterval,
                 unit: 'jam',
@@ -169,14 +172,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
                 borderColor: borderColor,
+                isDark: isDark,
                 onChanged: (v) => setState(
                     () => _settings = _settings.copyWith(breakInterval: v)),
               ),
             ],
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
 
+          // ── Save Button ───────────────────────────────────
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -190,12 +195,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : const Text('Simpan Settings'),
             ),
           ),
-          const SizedBox(height: 24),
         ],
       ),
     );
   }
 }
+
+// ── Group Label ──────────────────────────────────────────
 
 class _GroupLabel extends StatelessWidget {
   final String text;
@@ -216,6 +222,23 @@ class _GroupLabel extends StatelessWidget {
   }
 }
 
+// ── Divider ──────────────────────────────────────────────
+
+class _Divider extends StatelessWidget {
+  final Color borderColor;
+  const _Divider({required this.borderColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 68),
+      child: Divider(height: 1, color: borderColor, thickness: 1),
+    );
+  }
+}
+
+// ── Settings Card ────────────────────────────────────────
+
 class _SettingsCard extends StatelessWidget {
   final bool isDark;
   final Color cardColor;
@@ -234,16 +257,29 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.15 : 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Column(children: children),
+      ),
     );
   }
 }
 
+// ── Toggle Row ───────────────────────────────────────────
+
 class _ToggleRow extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String subtitle;
   final bool value;
@@ -253,6 +289,7 @@ class _ToggleRow extends StatelessWidget {
 
   const _ToggleRow({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.value,
@@ -264,17 +301,17 @@ class _ToggleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icon, size: 18, color: AppTheme.primary),
+            child: Icon(icon, size: 19, color: iconColor),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -284,10 +321,11 @@ class _ToggleRow extends StatelessWidget {
                 Text(title,
                     style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
+                        fontSize: 14.5,
                         color: textPrimary)),
+                const SizedBox(height: 2),
                 Text(subtitle,
-                    style: TextStyle(fontSize: 12, color: textSecondary)),
+                    style: TextStyle(fontSize: 12.5, color: textSecondary)),
               ],
             ),
           ),
@@ -298,8 +336,11 @@ class _ToggleRow extends StatelessWidget {
   }
 }
 
+// ── Time Row ─────────────────────────────────────────────
+
 class _TimeRow extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String time;
   final Color textPrimary;
@@ -308,6 +349,7 @@ class _TimeRow extends StatelessWidget {
 
   const _TimeRow({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.time,
     required this.textPrimary,
@@ -319,36 +361,35 @@ class _TimeRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
         child: Row(
           children: [
             Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: AppTheme.accent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                color: iconColor.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(11),
               ),
-              child: Icon(icon, size: 18, color: AppTheme.accent),
+              child: Icon(icon, size: 19, color: iconColor),
             ),
             const SizedBox(width: 14),
             Text(title,
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 14.5,
                     color: textPrimary)),
             const Spacer(),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
                 color: AppTheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Text(time,
                   style: const TextStyle(
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                     fontSize: 14,
                     color: AppTheme.primary,
                   )),
@@ -360,8 +401,11 @@ class _TimeRow extends StatelessWidget {
   }
 }
 
+// ── Stepper Row ──────────────────────────────────────────
+
 class _StepperRow extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final int value;
   final String unit;
@@ -371,10 +415,12 @@ class _StepperRow extends StatelessWidget {
   final Color textPrimary;
   final Color textSecondary;
   final Color borderColor;
+  final bool isDark;
   final ValueChanged<int> onChanged;
 
   const _StepperRow({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.value,
     required this.unit,
@@ -384,48 +430,51 @@ class _StepperRow extends StatelessWidget {
     required this.textPrimary,
     required this.textSecondary,
     required this.borderColor,
+    required this.isDark,
     required this.onChanged,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icon, size: 18, color: AppTheme.primary),
+            child: Icon(icon, size: 19, color: iconColor),
           ),
           const SizedBox(width: 14),
           Text(title,
               style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: 14.5,
                   color: textPrimary)),
           const Spacer(),
-          // Stepper
           Row(
             children: [
               _StepBtn(
                 icon: Icons.remove_rounded,
                 enabled: value > min,
                 borderColor: borderColor,
+                isDark: isDark,
                 onTap: value > min ? () => onChanged(value - step) : null,
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  '$value $unit',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: textPrimary,
+              SizedBox(
+                width: 70,
+                child: Center(
+                  child: Text(
+                    '$value $unit',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13.5,
+                      color: textPrimary,
+                    ),
                   ),
                 ),
               ),
@@ -433,6 +482,7 @@ class _StepperRow extends StatelessWidget {
                 icon: Icons.add_rounded,
                 enabled: value < max,
                 borderColor: borderColor,
+                isDark: isDark,
                 onTap: value < max ? () => onChanged(value + step) : null,
               ),
             ],
@@ -447,12 +497,14 @@ class _StepBtn extends StatelessWidget {
   final IconData icon;
   final bool enabled;
   final Color borderColor;
+  final bool isDark;
   final VoidCallback? onTap;
 
   const _StepBtn({
     required this.icon,
     required this.enabled,
     required this.borderColor,
+    required this.isDark,
     required this.onTap,
   });
 
@@ -460,12 +512,15 @@ class _StepBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: 30,
-        height: 30,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderColor, width: 1),
+          color: enabled
+              ? AppTheme.primary.withOpacity(0.1)
+              : (isDark ? AppTheme.borderDark : const Color(0xFFF3F4F6)),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
