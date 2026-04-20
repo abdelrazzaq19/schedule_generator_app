@@ -310,9 +310,10 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // ── Header ──────────────────────────────────────
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 20, 0),
+              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
               child: Row(
                 children: [
+                  // Title — tap untuk summary
                   GestureDetector(
                     onTap: () => Navigator.push(
                       context,
@@ -336,7 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Text(
                               'ScheduleAI',
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 color: textPrimary,
                                 letterSpacing: -0.8,
@@ -351,20 +352,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 'Tap untuk ringkasan harian',
                                 style: TextStyle(
-                                  fontSize: 11.5,
+                                  fontSize: 11,
                                   color: textSecondary,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 2),
                               Icon(Icons.chevron_right_rounded,
-                                  size: 13, color: textSecondary),
+                                  size: 12, color: textSecondary),
                             ],
                           ),
                         ),
                       ],
                     ),
                   ),
+
                   const Spacer(),
+
+                  // ── Action icons (hanya muncul jika ada tasks) ──
                   if (_tasks.isNotEmpty) ...[
                     _IconBtn(
                       icon: Icons.search_rounded,
@@ -377,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         _isReordering = false;
                       }),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     _IconBtn(
                       icon: _hasActiveFilter
                           ? Icons.filter_alt_rounded
@@ -386,29 +390,25 @@ class _HomeScreenState extends State<HomeScreen> {
                       isActive: _hasActiveFilter,
                       onTap: _openFilterSort,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     _IconBtn(
                       icon: Icons.bar_chart_rounded,
                       isDark: isDark,
                       isActive: _showStats,
                       onTap: () => setState(() => _showStats = !_showStats),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                   ],
-                  _IconBtn(
-                    icon: Icons.history_rounded,
+
+                  // ── More menu: history + settings digabung ──
+                  _MoreMenuBtn(
                     isDark: isDark,
-                    onTap: () => Navigator.push(
+                    onHistory: () => Navigator.push(
                       context,
                       MaterialPageRoute(
                           builder: (_) => const SavedSchedulesScreen()),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  _IconBtn(
-                    icon: Icons.tune_rounded,
-                    isDark: isDark,
-                    onTap: () async {
+                    onSettings: () async {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -700,7 +700,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(24, 6, 24, 0),
                 child: Text(
-                  'Tidak ada task dengan kata "${_searchQuery}"',
+                  'Tidak ada task dengan kata "$_searchQuery"',
                   style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ),
@@ -816,6 +816,117 @@ class _HomeScreenState extends State<HomeScreen> {
               shape: const CircleBorder(),
               child: const Icon(Icons.add_rounded, size: 26),
             ),
+    );
+  }
+}
+
+// ── More Menu Button ─────────────────────────────────────
+// Menggabungkan tombol History & Settings menjadi satu popup menu
+// agar tidak overflow di header
+
+class _MoreMenuBtn extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onHistory;
+  final VoidCallback onSettings;
+
+  const _MoreMenuBtn({
+    required this.isDark,
+    required this.onHistory,
+    required this.onSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor =
+        isDark ? AppTheme.textSecondaryDark : AppTheme.textSecondaryLight;
+    final cardColor = isDark ? AppTheme.cardDark : Colors.white;
+    final borderColor = isDark ? AppTheme.borderDark : AppTheme.borderLight;
+    final textPrimary =
+        isDark ? AppTheme.textPrimaryDark : AppTheme.textPrimaryLight;
+
+    return PopupMenuButton<String>(
+      padding: EdgeInsets.zero,
+      icon: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(11),
+          border: Border.all(color: borderColor, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(Icons.more_vert_rounded, size: 17, color: iconColor),
+      ),
+      color: cardColor,
+      elevation: 8,
+      shadowColor: Colors.black.withOpacity(0.15),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      onSelected: (value) {
+        if (value == 'history') onHistory();
+        if (value == 'settings') onSettings();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: 'history',
+          height: 46,
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.history_rounded,
+                    size: 16, color: AppTheme.primary),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Jadwal Tersimpan',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'settings',
+          height: 46,
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppTheme.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(Icons.tune_rounded,
+                    size: 16, color: AppTheme.info),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Pengaturan',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1143,13 +1254,13 @@ class _IconBtn extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 38,
-        height: 38,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: isActive
               ? AppTheme.primary.withOpacity(0.12)
               : (isDark ? AppTheme.cardDark : Colors.white),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(11),
           border: Border.all(
             color: isActive
                 ? AppTheme.primary.withOpacity(0.3)
@@ -1166,7 +1277,7 @@ class _IconBtn extends StatelessWidget {
         ),
         child: Icon(
           icon,
-          size: 17,
+          size: 16,
           color: isActive
               ? AppTheme.primary
               : (isDark
